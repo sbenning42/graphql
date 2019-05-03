@@ -234,20 +234,47 @@ export type Dependency = {
     input?: any;
     item?: any;
     array?: any;
+    inputName?: string;
+    itemName?: string;
+    arrayName?: string;
 };
 export type Dependencies = { [x: string]: Dependency };
 
 export function makeModelFieldInputDef<Model>(property: string, field: Model, dependencies: Dependencies = {}) {
+    // field is a primitive string
     if (typeof(field) === 'string') {
-        return {
-            [property]: 
-        };
+        return `${property}: QueryStringInput
+        `;
+    // field is a primitive number
     } else if (typeof(field) === 'number') {
-        
+        return `${property}: QueryIntInput
+        `;
+    // field is a primitive boolean
     } else if (typeof(field) === 'boolean') {
-        
+        return `${property}: QueryBooleanInput
+        `;
+    } else if (Array.isArray(field)) {
+        // field is an array of primitive string
+        if (typeof(field[0]) === 'string') {
+            return `${property}: QueryStringArrayInput
+            `;
+        // field is an array of primitive number
+        } else if (typeof(field[0]) === 'number') {
+            return `${property}: QueryIntArrayInput
+            `;
+        // field is an array of primitive boolean
+        } else if (typeof(field[0]) === 'boolean') {
+            return `${property}: QueryBooleanArrayInput
+            `;
+        // field is an array of models
+        } else {
+            return `${property}: ${dependencies[property].arrayName}
+            `;
+        }
+    // field is a model
     } else {
-        
+        return `${property}: ${dependencies[property].inputName}
+        `;
     }
 }
 
@@ -257,9 +284,26 @@ export function makeModelGQLinputDef<Model>(rawName: string, instance: Model, de
     const queryModelInputName = `Query${cName}Input`;
     const queryModelItemInputName = `Query${cName}ItemInput`;
     const queryModelArrayInputName = `Query${cName}ArrayInput`;
-    return gql`
-
+    dependencies[rawName] = {
+        inputName: queryModelInputName,
+        itemName: queryModelItemInputName,
+        arrayName: queryModelArrayInputName,
+    };
+    const properiesDefs = Object.keys(instance)
+        .reduce((thisDef, property) => thisDef + makeModelFieldInputDef(property, instance[property], dependencies), '');
+    const defs = `
+    input ${queryModelInputName} {
+        ${properiesDefs}
+    }
     `;
+    dependencies[rawName] = {
+        inputName: queryModelInputName,
+        itemName: queryModelItemInputName,
+        arrayName: queryModelArrayInputName,
+        input: defs
+    };
+    console.log(defs);
+    return gql`${defs}`;
 }
 
 export function makeModelsGQLinputDef<Model>(name: string, instance: Model) {
