@@ -1,5 +1,3 @@
-import { gql } from "apollo-server-core";
-
 export interface QueryPagination {
     limit: number;
     skip?: number;
@@ -411,22 +409,19 @@ export function getArgType(prop: string, arg, dependencies: Dependencies = {}) {
 }
 
 export function getSortFieldInput(prop: string, arg, dependencies: Dependencies = {}) {
-    // field is a primitive string
+
     if (typeof(arg) === 'string' || typeof(arg) === 'number' || typeof(arg) === 'boolean') {
         return `
     ${prop}: Int`;
-    // field is a primitive number
     } else if (Array.isArray(arg)) {
         if (typeof(arg[0]) === 'string' || typeof(arg[0]) === 'number' || typeof(arg[0]) === 'boolean') {
             return `
     ${prop}: Int`;
-        // field is an array of primitive number
         } else {
             const initialDependency = dependencies[prop] as string;
             return `
     ${prop}: ${(dependencies[initialDependency] as _Dependency).sortName}`;
         }
-    // field is a primitive boolean
     } else {
             const initialDependency = dependencies[prop] as string;
             return `
@@ -543,8 +538,8 @@ input ${cName}SortInput {
     create${cName}Many(inputs: [${queryTypeName + 'Input'}!]!): [${cName}!]
     update${cName}Many(updates: [${queryUpdateName}!]!): [${cName}!]
     delete${cName}Many(ids: [ID!]!): [${cName}]
-    update${cName}Where(query: ${queryModelInputName}!, updates: [${queryUpdateName}!]!): [${cName}!]
-    delete${cName}Where(query: ${queryModelInputName}!, ids: [ID!]!): [${cName}]`,
+    update${cName}Where(query: ${queryModelInputName}!, changes: ${queryChangesName}!): [${cName}!]
+    delete${cName}Where(query: ${queryModelInputName}!): [${cName}]`,
     };
     return dependencies;
 }
