@@ -529,17 +529,18 @@ input ${cName}SortInput {
         argsRequired: argsRequired,
         gql: defs,
         queries: `
-    get${cName}Where(query: ${queryModelInputName + 'Root'}): [${cName}!]
-    getById${cName}(id: ID!): ${cName}`,
+    get${cName}Where(query: ${queryModelInputName + 'Root'}): [${cName}!]!
+    get${cName}ById(id: ID!): ${cName}
+    getMany${cName}ById(ids: [ID!]!): [${cName}!]!`,
         mutations: `
     create${cName}(input: ${queryTypeName + 'Input!'}): ${cName}
     update${cName}(update: ${queryUpdateName}!): ${cName}
     delete${cName}(id: ID!): ${cName}
-    create${cName}Many(inputs: [${queryTypeName + 'Input'}!]!): [${cName}!]
-    update${cName}Many(updates: [${queryUpdateName}!]!): [${cName}!]
-    delete${cName}Many(ids: [ID!]!): [${cName}]
-    update${cName}Where(query: ${queryModelInputName}!, changes: ${queryChangesName}!): [${cName}!]
-    delete${cName}Where(query: ${queryModelInputName}!): [${cName}]`,
+    createMany${cName}(inputs: [${queryTypeName + 'Input'}!]!): [${cName}!]!
+    updateMany${cName}(updates: [${queryUpdateName}!]!): [${cName}!]!
+    deleteMany${cName}(ids: [ID!]!): [${cName}!]!
+    updateMany${cName}Where(query: ${queryModelInputName}!, changes: ${queryChangesName}!): [${cName}!]!
+    deleteMany${cName}Where(query: ${queryModelInputName}!): [${cName}!]!`,
     };
     return dependencies;
 }
@@ -583,3 +584,17 @@ type Mutation {
 `;
 }
 
+export function makeModelsGQLResolversDef(dependencies: Dependencies) {
+    return Object.entries(dependencies)
+        .reduce((resolvers: any, [name, dependency]) => {
+            return {
+                Query: {
+                    ...resolvers.Query,
+                    ...(dependency as _Dependency).queries
+                },
+                Mutation: {
+                    ...resolvers.Mutation,
+                },
+            };
+        }, {});
+}
